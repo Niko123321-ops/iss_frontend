@@ -1,6 +1,7 @@
-import React, {SyntheticEvent, useState} from "react";
+import React, {SyntheticEvent, useEffect, useState} from "react";
 import axios from "axios";
 import {Navigate} from "react-router-dom";
+import {UserDto} from "../classes/user.dto";
 
 const Nav = () => {
 
@@ -9,8 +10,36 @@ const Nav = () => {
 
     const Submit = async (e:SyntheticEvent) => {
         e.preventDefault();
-        const res = await axios.post('http://localhost:3001/auth/logout', { withCredentials: true })
+        const res = await axios.post('http://localhost:3001/auth/logout', { withCredentials: true });
+
+        if(res.status == 201){
+            setRedirect(true);
+        }
+
+        if(res.status !== 201){
+            setError('Napaka');
+        }
     }
+
+    const [user,setUser] = useState<UserDto>(new UserDto(0, '', ''));
+
+    const currentUser = async () => {
+        try{
+            const res = await axios.get('http://localhost:3001/users/profile', {withCredentials: true});
+
+            if(res.status == 200){
+                console.log(res.data);
+                setUser(res.data);
+            }
+        }
+        catch (e){
+
+        }
+    }
+
+    useEffect( () => {
+        currentUser();
+    }, []);
 
     if(redirect){
         return <Navigate to='/' />
@@ -29,10 +58,11 @@ const Nav = () => {
                             <div className="col-sm-4 offset-md-1 py-4">
                                 <h4 className="text-white">Povezave</h4>
                                 <ul className="list-unstyled">
-                                    <li><a href="/login" className="text-white">Login</a></li>
-                                    <li><a href="/register" className="text-white">Register</a></li>
-                                    <li><a href="/profile" className="text-white">Profile</a></li>
-                                    <li><a href="/create" className="text-white">Ustvari post</a></li>
+                                    {!user && <li><a href="/login" className="text-white">Login</a></li>}
+                                    {!user && <li><a href="/register" className="text-white">Register</a></li>}
+                                    {user && <li><a href="/profile" className="text-white">Profile</a></li>}
+                                    {user && <li><a href="/create" className="text-white">Ustvari post</a></li>}
+                                    {user && <li ><button type="button" onClick={Submit} className="btn btn-sm btn-outline-secondary">Logout</button></li>}
                                 </ul>
                             </div>
                         </div>
